@@ -1,7 +1,8 @@
-" file word_complete.vim
-" author:  Benji Fisher
-" version:  0.4
-" Last modified: Mon 31 Mar 2003 01:48:23 PM EST
+" word_complete.vim:	(global plugin) automatically offer word completion
+" Last Change:		Tue 01 Apr 2003 08:30:47 PM EST
+" Author:		Benji Fisher <benji@member.AMS.org>
+" Version:		0.5, for Vim 6.1
+" URL:		http://vim.sourceforge.net/scripts/script.php?script_id=73
 " 
 " DESCRIPTION:
 "  Each time you type an alphabetic character, the script attempts 
@@ -83,22 +84,22 @@ endfun
 
 " Make an :imap for each alphabetic character, and define a few :vmap's.
 fun! DoWordComplete()
-  vnoremap <Tab> <Esc>`>a
-  vnoremap <Esc> d
+  vnoremap <buffer> <Tab> <Esc>`>a
+  vnoremap <buffer> <Esc> d
   if has("mac")
-    vnoremap  <Del>a
+    vnoremap <buffer>  <Del>a
   else
-    vnoremap <BS> <Del>a
+    vnoremap <buffer> <BS> <Del>a
   endif "has("mac")
   if version>505
-    vnoremap <C-N> <Del>a<C-N>
-    vnoremap <C-P> <Del>a<C-P><C-P>
-    vnoremap <C-X> <Del>a<C-P><C-X>
+    vnoremap <buffer> <C-N> <Del>a<C-N>
+    vnoremap <buffer> <C-P> <Del>a<C-P><C-P>
+    vnoremap <buffer> <C-X> <Del>a<C-P><C-X>
   endif "version>505
   " Thanks to Bohdan Vlasyuk for suggesting a loop here:
   let letter = "a"
   while letter <= "z"
-    execute "inoremap" letter letter . "<Esc>:call WordComplete()<CR>"
+    execute "inoremap <buffer>" letter letter . "<Esc>:call WordComplete()<CR>"
     let letter = nr2char(char2nr(letter) + 1)
   endwhile
 endfun
@@ -106,22 +107,22 @@ endfun
 " Remove all the mappings created by DoWordComplete().
 " Lazy:  I do not save and restore existing mappings.
 fun! EndWordComplete()
-  vunmap <Tab>
-  vunmap <Esc>
+  vunmap <buffer> <Tab>
+  vunmap <buffer> <Esc>
   if has("mac")
-    vunmap 
+    vunmap <buffer> 
   else
-    vunmap <BS>
+    vunmap <buffer> <BS>
   endif "has("mac")
   if version>505
-    vunmap <C-N>
-    vunmap <C-P>
-    vunmap <C-X>
+    vunmap <buffer> <C-N>
+    vunmap <buffer> <C-P>
+    vunmap <buffer> <C-X>
   endif "version>505
   " Thanks to Bohdan Vlasyuk for suggesting a loop here:
   let letter = char2nr("a")
   while letter <= char2nr("z")
-    execute "iunmap" nr2char(letter)
+    execute "iunmap <buffer>" nr2char(letter)
     let letter = letter + 1
   endwhile
 endfun
