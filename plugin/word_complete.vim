@@ -1,9 +1,9 @@
 " word_complete.vim:	(global plugin) automatically offer word completion
-" Last Change:		Tue 01 Apr 2003 08:30:47 PM EST
+" Last Change:		Sat 09 Aug 2003 09:25:29 AM EDT
 " Author:		Benji Fisher <benji@member.AMS.org>
-" Version:		0.5, for Vim 6.1
+" Version:		0.6, for Vim 6.1+
 " URL:		http://vim.sourceforge.net/scripts/script.php?script_id=73
-" 
+
 " DESCRIPTION:
 "  Each time you type an alphabetic character, the script attempts 
 "  to complete the current word.  The suggested completion is selected 
@@ -11,14 +11,14 @@
 "  Other options:  <Tab> to accept, <BS> to get rid of the completion, 
 "  <Esc> to leave Insert mode without accepting the completion, <C-N> 
 "  or <C-P> to cycle through choices, <C-X> to enter <C-X> mode. 
-"
+
 "  The script works by :imap'ping each alphabetic character, and uses
 "  Insert-mode completion (:help i_ctrl-p).  It is far from perfect.  For
 "  example, every second character you type is in Select mode, so completions
 "  are offered only half the time.  Since Select mode uses the same mappings
 "  as Visual mode, the special keys mentioned above may conflict with what you
 "  are used to in Visual mode.
-"
+
 "  INSTALLATION
 "  :source it from your vimrc file or drop it in your plugin directory. 
 "  To activate, choose "Word Completion" from the Tools menu, or type 
@@ -31,6 +31,31 @@
 "  add the line
 "  	autocmd VimEnter * call DoWordComplete()
 "  to your vimrc file.
+
+"  USER CONFIGURATION
+"  Use this section to change some of the defaults.  Before upgrading to a new
+"  version of this file, you should copy the following section to a file
+"  word_complete.vimrc in your plugin directory, normally the same directory
+"  as this file.  If your system administrator has installed this file, you
+"  should install word_complete.vimrc in your after/plugin/ directory so that
+"  your choices override the system defaults.  See
+"    :help ftplugin-overrule
+"    :help 'runtimepath'
+"  for details.
+" ==================== file word_complete.vimrc ====================
+" User Configuration file for word_complete.vim .
+" To use this, uncomment and change the defaults. 
+" Do not complete words shorter than this length:
+" let g:WC_min_len = 3
+" Use this key to accept the offered completion:
+" let g:WC_accept_key = "<Tab>"
+" ==================== end: word_complete.vimrc ====================
+
+" source the user configuration file(s):
+runtime! plugin/<sfile>:t:r.vimrc
+" Use the values from the configuration file(s) or the defaults:
+let s:min_len = exists("g:WC_min_len") ? g:WC_min_len : 3
+let s:accept_key = exists("g:WC_accept_key") ? g:WC_accept_key : "<Tab>"
 
 " Use Vim defaults while :source'ing this file.
 let save_cpo = &cpo
@@ -47,11 +72,27 @@ fun! s:Langmap(char)
   return (val != "") ? val : a:char
 endfun
 
+" The :startinsert command does not have an option for acting like "a"
+" instead of "i" so this implements it.
+fun! s:StartAppend()
+  if strlen(getline(".")) > col(".")
+    normal l
+    startinsert
+  else
+    startinsert!
+  endif
+endfun
+
 fun! WordComplete()
+  let length=strlen(expand("<cword>"))
+  " Do not try to complete 1- nor 2-character words.
+  if length < s:min_len
+    call s:StartAppend()
+    return
+  endif 
   " Save and reset the 'ignorecase' option.
   let save_ic = &ignorecase
   set noignorecase
-  let length=strlen(expand("<cword>"))
   " Use language maps (keymaps) if appropriate.
   if &iminsert == 1
     let char = getline(".")[col(".")-1]
@@ -60,23 +101,20 @@ fun! WordComplete()
       execute "normal! r" . lchar
     endif
   endif
+  " If at EOL or before a space or punctuation character, do completion.
   if strlen(getline(".")) == col(".")
 	\ || getline(".")[col(".")] =~ '[[:punct:][:space:]]'
     execute "normal a\<C-P>\<Esc>"
   endif
-  if strlen(expand("<cword>"))>length
+  " If a match was found, highlight the completed part in Select mode.
+  if strlen(expand("<cword>")) > length
     execute "normal viwo" . length . "l\<C-G>"
-  else
-    if version>505
-      if strlen(getline("."))>col(".")
-        normal l
-        startinsert
-      else
-        startinsert!
-      endif
+  else	" ... just return to Insert mode.
+    if version > 505
+      call s:StartAppend()
     else
       execute "normal a*\<Esc>gh"
-    endif "version>505
+    endif "version > 505
   endif
   " Restore the 'ignorecase' option.
   let &ignorecase = save_ic
@@ -84,18 +122,18 @@ endfun
 
 " Make an :imap for each alphabetic character, and define a few :vmap's.
 fun! DoWordComplete()
-  vnoremap <buffer> <Tab> <Esc>`>a
+  execute "vnoremap <buffer>" s:accept_key "<Esc>`>a"
   vnoremap <buffer> <Esc> d
   if has("mac")
     vnoremap <buffer>  <Del>a
   else
     vnoremap <buffer> <BS> <Del>a
   endif "has("mac")
-  if version>505
+  if version > 505
     vnoremap <buffer> <C-N> <Del>a<C-N>
     vnoremap <buffer> <C-P> <Del>a<C-P><C-P>
     vnoremap <buffer> <C-X> <Del>a<C-P><C-X>
-  endif "version>505
+  endif "version > 505
   " Thanks to Bohdan Vlasyuk for suggesting a loop here:
   let letter = "a"
   while letter <= "z"
@@ -107,18 +145,18 @@ endfun
 " Remove all the mappings created by DoWordComplete().
 " Lazy:  I do not save and restore existing mappings.
 fun! EndWordComplete()
-  vunmap <buffer> <Tab>
+  execute "vunmap <buffer>" s:accept_key
   vunmap <buffer> <Esc>
   if has("mac")
     vunmap <buffer> 
   else
     vunmap <buffer> <BS>
   endif "has("mac")
-  if version>505
+  if version > 505
     vunmap <buffer> <C-N>
     vunmap <buffer> <C-P>
     vunmap <buffer> <C-X>
-  endif "version>505
+  endif "version > 505
   " Thanks to Bohdan Vlasyuk for suggesting a loop here:
   let letter = char2nr("a")
   while letter <= char2nr("z")
@@ -128,3 +166,5 @@ fun! EndWordComplete()
 endfun
 
 let &cpo = save_cpo
+
+" vim:sts=2:sw=2:ff=unix:
