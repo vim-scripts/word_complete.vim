@@ -1,7 +1,7 @@
 " word_complete.vim:	(global plugin) automatically offer word completion
-" Last Change:		Sat 09 Aug 2003 09:25:29 AM EDT
+" Last Change:		Sat 25 Mar 2006 12:51:42 PM EST
 " Author:		Benji Fisher <benji@member.AMS.org>
-" Version:		0.6, for Vim 6.1+
+" Version:		1.0, for Vim 7.0+
 " URL:		http://vim.sourceforge.net/scripts/script.php?script_id=73
 
 " DESCRIPTION:
@@ -12,27 +12,26 @@
 "  <Esc> to leave Insert mode without accepting the completion, <C-N> 
 "  or <C-P> to cycle through choices, <C-X> to enter <C-X> mode. 
 
+" LIMITATIONS: 
 "  The script works by :imap'ping each alphabetic character, and uses
-"  Insert-mode completion (:help i_ctrl-p).  It is far from perfect.  For
-"  example, every second character you type is in Select mode, so completions
-"  are offered only half the time.  Since Select mode uses the same mappings
-"  as Visual mode, the special keys mentioned above may conflict with what you
+"  Insert-mode completion (:help ins-completion).  It is far from perfect.  
+"  Since characters you type are not entered in a single round of Insert mode,
+"  abbreviations will usually not work.  I have at least one report that
+"  mswin.vim interferes a little.  Since Select mode uses the same mappings as
+"  Visual mode, the special keys mentioned above may conflict with what you
 "  are used to in Visual mode.
 
-"  INSTALLATION
+" INSTALLATION:
 "  :source it from your vimrc file or drop it in your plugin directory. 
 "  To activate, choose "Word Completion" from the Tools menu, or type 
 "  :call DoWordComplete() 
 "  To make it stop, choose "Tools/Stop Completion", or type 
 "  :call EndWordComplete()
-"  If you want to activate the script by default, either :source it from, and
-"  add the :call line above to, your vimrc file or (if you use it as a plugin,
-"  in which case the functions are not defined when your vimrc file is read)
-"  add the line
-"  	autocmd VimEnter * call DoWordComplete()
+"  If you want to activate the script by default, add the line
+"  	autocmd BufEnter * call DoWordComplete()
 "  to your vimrc file.
 
-"  USER CONFIGURATION
+" USER CONFIGURATION:
 "  Use this section to change some of the defaults.  Before upgrading to a new
 "  version of this file, you should copy the following section to a file
 "  word_complete.vimrc in your plugin directory, normally the same directory
@@ -45,8 +44,9 @@
 " ==================== file word_complete.vimrc ====================
 " User Configuration file for word_complete.vim .
 " To use this, uncomment and change the defaults. 
+
 " Do not complete words shorter than this length:
-" let g:WC_min_len = 3
+" let g:WC_min_len = 1
 " Use this key to accept the offered completion:
 " let g:WC_accept_key = "<Tab>"
 " ==================== end: word_complete.vimrc ====================
@@ -54,7 +54,7 @@
 " source the user configuration file(s):
 runtime! plugin/<sfile>:t:r.vimrc
 " Use the values from the configuration file(s) or the defaults:
-let s:min_len = exists("g:WC_min_len") ? g:WC_min_len : 3
+let s:min_len = exists("g:WC_min_len") ? g:WC_min_len : 1
 let s:accept_key = exists("g:WC_accept_key") ? g:WC_accept_key : "<Tab>"
 
 " Use Vim defaults while :source'ing this file.
@@ -120,19 +120,19 @@ fun! WordComplete()
   let &ignorecase = save_ic
 endfun
 
-" Make an :imap for each alphabetic character, and define a few :vmap's.
+" Make an :imap for each alphabetic character, and define a few :smap's.
 fun! DoWordComplete()
-  execute "vnoremap <buffer>" s:accept_key "<Esc>`>a"
-  vnoremap <buffer> <Esc> d
+  execute "snoremap <buffer>" s:accept_key "<Esc>`>a"
+  snoremap <buffer> <Esc> d
   if has("mac")
-    vnoremap <buffer>  <Del>a
+    snoremap <buffer>  <Del>a
   else
-    vnoremap <buffer> <BS> <Del>a
+    snoremap <buffer> <BS> <Del>a
   endif "has("mac")
   if version > 505
-    vnoremap <buffer> <C-N> <Del>a<C-N>
-    vnoremap <buffer> <C-P> <Del>a<C-P><C-P>
-    vnoremap <buffer> <C-X> <Del>a<C-P><C-X>
+    snoremap <buffer> <C-N> <Del>a<C-N>
+    snoremap <buffer> <C-P> <Del>a<C-P><C-P>
+    snoremap <buffer> <C-X> <Del>a<C-P><C-X>
   endif "version > 505
   " Thanks to Bohdan Vlasyuk for suggesting a loop here:
   let letter = "a"
