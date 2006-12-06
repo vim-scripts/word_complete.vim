@@ -1,7 +1,7 @@
 " word_complete.vim:	(global plugin) automatically offer word completion
-" Last Change:		Sat 25 Mar 2006 12:51:42 PM EST
+" Last Change:		Wed 6 Dec 2006 12:51:42 PM EST
 " Author:		Benji Fisher <benji@member.AMS.org>
-" Version:		1.0, for Vim 7.0+
+" Version:		1.1, for Vim 7.0+
 " URL:		http://vim.sourceforge.net/scripts/script.php?script_id=73
 
 " DESCRIPTION:
@@ -136,7 +136,7 @@ fun! DoWordComplete()
   endif "version > 505
   " Thanks to Bohdan Vlasyuk for suggesting a loop here:
   let letter = "a"
-  while letter <= "z"
+  while letter <=# "z"
     execute "inoremap <buffer>" letter letter . "<Esc>:call WordComplete()<CR>"
     let letter = nr2char(char2nr(letter) + 1)
   endwhile
